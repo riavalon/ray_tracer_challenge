@@ -1,6 +1,8 @@
 package canvas
 
 import (
+	"math"
+
 	tup "github.com/riavalon/ray_tracer/tuples"
 )
 
@@ -11,6 +13,17 @@ type Colour struct {
 	Red   float64
 	Green float64
 	Blue  float64
+}
+
+// ScaleWithMaxRange takes an integer representing the max range
+// of the new scale. Will convert the colour components to conform
+// with that scale and return the new converted colour.
+func (c Colour) ScaleWithMaxRange(m float64) Colour {
+	return NewColour(
+		math.Max(0, math.Min(m, math.Round(tup.Calculate(m, c.Red, tup.Multiply)))),
+		math.Max(0, math.Min(m, math.Round(tup.Calculate(m, c.Green, tup.Multiply)))),
+		math.Max(0, math.Min(m, math.Round(tup.Calculate(m, c.Blue, tup.Multiply)))),
+	)
 }
 
 // Subtract takes a passed in colour struct and subtracts it from

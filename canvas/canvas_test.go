@@ -1,6 +1,10 @@
 package canvas
 
-import "testing"
+import (
+	"bufio"
+	"strings"
+	"testing"
+)
 
 func TestCreateCanvas(t *testing.T) {
 	c := NewCanvas(10, 20)
@@ -72,5 +76,91 @@ func TestGetPixelFromCanvas(t *testing.T) {
 
 	if pixel.Red != 1 || pixel.Green != 1 || pixel.Blue != 1 {
 		t.Errorf("Expected to get pixel at x %v; y %v", x, y)
+	}
+}
+
+func TestCanvasToPPMHeader(t *testing.T) {
+	c := NewCanvas(5, 3)
+	got := c.ToPPM()
+	want := []string{"P3", "5 3", "255"}
+
+	scanner := bufio.NewScanner(strings.NewReader(got))
+	line := 0
+
+	for scanner.Scan() {
+		if line > 2 {
+			break
+		}
+		text := scanner.Text()
+		if text != want[line] {
+			t.Errorf("should get valid plain PPM header. Got %q; Want %q", text, want[line])
+		}
+		line++
+	}
+}
+
+func TestCanvasToPPMPixelBody(t *testing.T) {
+	c := NewCanvas(5, 3)
+
+	// colours we expect to find
+	c1 := NewColour(1.5, 0, 0)
+	c2 := NewColour(0, 0.5, 0)
+	c3 := NewColour(-0.5, 0, 1)
+
+	// Add coloured pixels to screen
+	c.WritePixel(0, 0, c1)
+	c.WritePixel(2, 1, c2)
+	c.WritePixel(4, 2, c3)
+
+	got := c.ToPPM()
+	want := `P3
+5 3
+255
+255 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 128 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 255
+`
+
+	if got != want {
+		t.Errorf("Should build the pixel body according to colours specified.\nGot\n%+vWant\n%+v", got, want)
+	}
+}
+
+func TestCanvasToPPMBodyLinesDontExceed70Chars(t *testing.T) {
+	c := NewCanvas(10, 2)
+
+	// set every pixel to colour(1, 0.8, 0.6)
+	colour := NewColour(1, 0.8, 0.6)
+	for y, row := range c.Screen {
+		for x := range row {
+			c.WritePixel(x, y, colour)
+		}
+	}
+
+	got := c.ToPPM()
+	want := []string{
+		"255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204",
+		"153 255 204 153 255 204 153 255 204 153 255 204 153",
+		"255 204 153 255 204 153 255 204 153 255 204 153 255 204 153 255 204",
+		"153 255 204 153 255 204 153 255 204 153 255 204 153",
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(got))
+	line := 0
+
+	for scanner.Scan() {
+		if line < 3 {
+			line++
+			continue
+		}
+
+		if line > 6 {
+			break
+		}
+
+		text := scanner.Text()
+		if text != want[line] {
+			t.Errorf("Line should move to the next line after 70 characters.")
+		}
 	}
 }

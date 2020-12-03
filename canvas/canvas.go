@@ -1,6 +1,12 @@
 package canvas
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Canvas struct that represents the screen where elements
+// are to be rendered.
 // are to be rendered.
 type Canvas struct {
 	Width  int
@@ -28,6 +34,35 @@ func (c *Canvas) GetPixel(x, y int) (Colour, bool) {
 	}
 	colour := c.Screen[y][x]
 	return colour, true
+}
+
+// ToPPM converts the calling canvas to a PPM Header string and returns it.
+func (c *Canvas) ToPPM() string {
+	var ppmFile strings.Builder
+	// ppm header
+	ppmFile.WriteString(fmt.Sprintf("P3\n%d %d\n%d\n", c.Width, c.Height, 255))
+
+	// ppm pixel body
+	for _, row := range c.Screen {
+		var rowStringBuilder strings.Builder
+
+		for i, cell := range row {
+			scaled := cell.ScaleWithMaxRange(255)
+			colourString := fmt.Sprintf("%v %v %v", scaled.Red, scaled.Green, scaled.Blue)
+			if i != len(row)-1 {
+				colourString += " "
+			}
+			rowStringBuilder.WriteString(colourString)
+			// ppmFile.WriteString(colourString)
+		}
+
+		rowstr := rowStringBuilder.String()
+		if len(rowstr) > 70 {
+
+		}
+		ppmFile.WriteString("\n")
+	}
+	return ppmFile.String()
 }
 
 // NewCanvas creates a new canvas with specified width and height,

@@ -81,3 +81,40 @@ func TestMultiplyingColours(t *testing.T) {
 		t.Errorf("Colours should be able to multiply correctly.\nGot  %v;Want %v;", got, want)
 	}
 }
+
+func TestScalingColoursToMaxVal(t *testing.T) {
+	// assuming we're using a max colour value of 255
+	// for PPM format with canvas, 0-1 colour values should
+	// map to 0-255
+	c := NewColour(1, 0, 0)
+	c2 := NewColour(0, 0.5, 0)
+	c3 := NewColour(0, 0, 0.85)
+
+	if scaled := c.ScaleWithMaxRange(255); scaled.Red != 255 {
+		t.Errorf("Failed to convert to scale with max range of %v. Got %v", 255, scaled.Red)
+	}
+
+	if scaled := c2.ScaleWithMaxRange(255); scaled.Green != 128 {
+		t.Errorf("Failed to convert to scale with max range of %v. Got %v", 255, scaled.Green)
+	}
+
+	if scaled := c3.ScaleWithMaxRange(255); scaled.Blue != 217 {
+		t.Errorf("Failed to convert to scale with max range of %v. Got %v", 255, scaled.Blue)
+	}
+}
+
+func TestScalingColourDoesNotExceedMax(t *testing.T) {
+	c := NewColour(1.5, 0, 0)
+
+	if scaled := c.ScaleWithMaxRange(255); scaled.Red > 255 {
+		t.Errorf("Value returned should not exceed max of %d but got %v", 255, scaled.Red)
+	}
+}
+
+func TestScalingColourCannotBeLessThanZero(t *testing.T) {
+	c := NewColour(-0.5, 0, 0)
+
+	if scaled := c.ScaleWithMaxRange(255); scaled.Red < 0 {
+		t.Errorf("Value returned should not be less than zero. Got %v", scaled.Red)
+	}
+}
