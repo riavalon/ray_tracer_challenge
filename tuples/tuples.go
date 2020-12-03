@@ -15,71 +15,85 @@ const EPSILON = 0.0001
 
 // Tuple struct defines the shape of a point or vector
 type Tuple struct {
-	x float64
-	y float64
-	z float64
-	w float64
+	X float64
+	Y float64
+	Z float64
+	W float64
 }
 
-func (t *Tuple) negate() *Tuple {
+// Negate inverts a tuple's values by subtracting from a x0 y0 z0 tuple
+func (t *Tuple) Negate() *Tuple {
 	zero := CreateVector(0, 0, 0)
-	negated := zero.subtract(t)
-	negated.w = t.w
+	negated := zero.Subtract(t)
+	negated.W = t.W
 	return negated
 }
 
-func (t *Tuple) add(b *Tuple) *Tuple {
+// Add sums the corresponding values of both tuples and returns a new tuple
+// with the total values
+func (t *Tuple) Add(b *Tuple) *Tuple {
 	return CreatePoint(
-		Calculate(t.x, b.x, Addition),
-		Calculate(t.y, b.y, Addition),
-		Calculate(t.z, b.z, Addition),
+		Calculate(t.X, b.X, Addition),
+		Calculate(t.Y, b.Y, Addition),
+		Calculate(t.Z, b.Z, Addition),
 	)
 }
 
-func (t *Tuple) subtract(b *Tuple) *Tuple {
+// Subtract takes the corresponding values of both tuples and subtracts them
+// returning a new tuple with the resulting values.
+func (t *Tuple) Subtract(b *Tuple) *Tuple {
 	return &Tuple{
-		x: Calculate(t.x, b.x, Subtract),
-		y: Calculate(t.y, b.y, Subtract),
-		z: Calculate(t.z, b.z, Subtract),
-		w: Calculate(t.w, b.w, Subtract),
+		X: Calculate(t.X, b.X, Subtract),
+		Y: Calculate(t.Y, b.Y, Subtract),
+		Z: Calculate(t.Z, b.Z, Subtract),
+		W: Calculate(t.W, b.W, Subtract),
 	}
 }
 
-func (t *Tuple) multiplyByScalar(n float64) *Tuple {
+// MultiplyByScalar multiplies each component of a tuple by a given scalar
+// returning a new tuple with the product of each component.
+func (t *Tuple) MultiplyByScalar(n float64) *Tuple {
 	tup := CreateTuple(
-		Calculate(n, t.x, Multiply),
-		Calculate(n, t.y, Multiply),
-		Calculate(n, t.z, Multiply),
-		t.w,
+		Calculate(n, t.X, Multiply),
+		Calculate(n, t.Y, Multiply),
+		Calculate(n, t.Z, Multiply),
+		t.W,
 	)
 	return tup
 }
 
-func (t *Tuple) divideByScalar(n float64) *Tuple {
+// DivideByScalar works just like (*Tuple).MultiplyByScalar but with a
+// division operation instead. Returns a new tuple with the resulting values.
+func (t *Tuple) DivideByScalar(n float64) *Tuple {
 	tup := CreateTuple(
-		Calculate(t.x, n, Divide),
-		Calculate(t.y, n, Divide),
-		Calculate(t.z, n, Divide),
-		t.w,
+		Calculate(t.X, n, Divide),
+		Calculate(t.Y, n, Divide),
+		Calculate(t.Z, n, Divide),
+		t.W,
 	)
 	return tup
 }
 
-func (t *Tuple) isPoint() bool {
-	return t.w == 1.0
+// IsPoint checks if tuple is a static point.
+func (t *Tuple) IsPoint() bool {
+	return t.W == 1.0
 }
 
-func (t *Tuple) isVector() bool {
-	return t.w == 0
+// IsVector checks if tuple is a vector.
+func (t *Tuple) IsVector() bool {
+	return t.W == 0
 }
 
-func (t *Tuple) isEquivalentTo(b *Tuple) bool {
+// IsEquivalentTo checks to see if the floating point values of each component
+// in the tuple are equalivalent to each other. If all components are equal,
+// the overall tuples are considered equal as well.
+func (t *Tuple) IsEquivalentTo(b *Tuple) bool {
 	result := true
 
-	x := Equals(t.x, b.x)
-	y := Equals(t.y, b.y)
-	z := Equals(t.z, b.z)
-	w := Equals(t.w, b.w)
+	x := Equals(t.X, b.X)
+	y := Equals(t.Y, b.Y)
+	z := Equals(t.Z, b.Z)
+	w := Equals(t.W, b.W)
 
 	// Check if any of the values are not equivalent
 	for _, value := range []bool{x, y, z, w} {
@@ -94,7 +108,7 @@ func (t *Tuple) isEquivalentTo(b *Tuple) bool {
 
 // CreateTuple handles creating a tuple. Will eventually handle point vs vector
 func CreateTuple(x, y, z, w float64) *Tuple {
-	return &Tuple{x: x, y: y, z: z, w: w}
+	return &Tuple{X: x, Y: y, Z: z, W: w}
 }
 
 // CreatePoint creates a tuple designated as a point in order to talk
@@ -121,14 +135,44 @@ func Equals(a, b float64) bool {
 func Magnitude(vec *Tuple) float64 {
 	var aggregate float64
 
-	if vec.isPoint() {
+	if vec.IsPoint() {
 		return aggregate
 	}
 
-	for _, val := range []float64{vec.x, vec.y, vec.z} {
+	for _, val := range []float64{vec.X, vec.Y, vec.Z} {
 		aggregate += Calculate(val, val, Multiply)
 	}
 	return math.Sqrt(aggregate)
+}
+
+// NormalizeVector converts an arbitrary vector into a unit vector using
+// the vectors magnitude.
+func NormalizeVector(vec *Tuple) *Tuple {
+	vectorMagnitude := Magnitude(vec)
+	return CreateVector(
+		Calculate(vec.X, vectorMagnitude, Divide),
+		Calculate(vec.Y, vectorMagnitude, Divide),
+		Calculate(vec.Z, vectorMagnitude, Divide),
+	)
+}
+
+// DotProduct gets the dot product of two tuples.
+func DotProduct(a, b *Tuple) float64 {
+	return Calculate(a.X, b.X, Multiply) + Calculate(a.Y, b.Y, Multiply) + Calculate(a.Z, b.Z, Multiply) + Calculate(a.W, b.W, Multiply)
+}
+
+// CrossProduct gets the cross product of two vectors. Does not work with points.
+// Second return value will be true if a non-vector is passed to this function.
+func CrossProduct(a, b *Tuple) (*Tuple, bool) {
+	if a.IsPoint() || b.IsPoint() {
+		return CreateVector(0, 0, 0), true
+	}
+
+	return CreateVector(
+		Calculate(a.Y, b.Z, Multiply)-Calculate(a.Z, b.Y, Multiply),
+		Calculate(a.Z, b.X, Multiply)-Calculate(a.X, b.Z, Multiply),
+		Calculate(a.X, b.Y, Multiply)-Calculate(a.Y, b.X, Multiply),
+	), false
 }
 
 // Subtract function that holds onto the floating point substract function. Used
