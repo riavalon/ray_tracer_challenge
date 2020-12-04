@@ -5,9 +5,7 @@ import (
 	"strings"
 )
 
-// Canvas struct that represents the screen where elements
-// are to be rendered.
-// are to be rendered.
+// Canvas struct that represents the screen where elements are to be rendered
 type Canvas struct {
 	Width  int
 	Height int
@@ -53,14 +51,10 @@ func (c *Canvas) ToPPM() string {
 				colourString += " "
 			}
 			rowStringBuilder.WriteString(colourString)
-			// ppmFile.WriteString(colourString)
 		}
 
-		rowstr := rowStringBuilder.String()
-		if len(rowstr) > 70 {
-
-		}
-		ppmFile.WriteString("\n")
+		finalString := breakLineAt(70, rowStringBuilder.String())
+		ppmFile.WriteString(fmt.Sprintf("%s\n", finalString))
 	}
 	return ppmFile.String()
 }
@@ -86,4 +80,38 @@ func NewCanvas(w, h int) Canvas {
 		Height: h,
 		Screen: screen,
 	}
+}
+
+func breakLineAt(end int, s string) string {
+	copy := s
+	var sb strings.Builder
+	for {
+		if len(copy) > end {
+			substr := copy[0:70]
+			lastSpaceIdx := findLastSpaceChar(substr)
+			substr = substr[0:lastSpaceIdx]
+			copy = copy[lastSpaceIdx+1:]
+			sb.WriteString(fmt.Sprintf("%s\n", substr))
+			continue
+		}
+
+		trimmedStr := strings.Trim(copy, " ")
+		sb.WriteString(trimmedStr)
+		break
+	}
+	return sb.String()
+}
+
+func reverseString(s string) string {
+	var sb strings.Builder
+	for i := len(s) - 1; i >= 0; i-- {
+		sb.WriteString(string(s[i]))
+	}
+	return sb.String()
+}
+
+func findLastSpaceChar(s string) int {
+	reversed := reverseString(s)
+	revIdx := strings.Index(reversed, " ")
+	return (len(s) - 1) - revIdx
 }

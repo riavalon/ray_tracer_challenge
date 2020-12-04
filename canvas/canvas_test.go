@@ -126,6 +126,8 @@ func TestCanvasToPPMPixelBody(t *testing.T) {
 	}
 }
 
+// I feel very ashamed with how dumb this unit test is written
+// but it does confirm the thing so I guess hoorah? I can refactor it later
 func TestCanvasToPPMBodyLinesDontExceed70Chars(t *testing.T) {
 	c := NewCanvas(10, 2)
 
@@ -146,21 +148,33 @@ func TestCanvasToPPMBodyLinesDontExceed70Chars(t *testing.T) {
 	}
 
 	scanner := bufio.NewScanner(strings.NewReader(got))
+	iteration := 0
 	line := 0
 
 	for scanner.Scan() {
-		if line < 3 {
-			line++
+		if iteration < 3 {
+			iteration++
 			continue
 		}
 
-		if line > 6 {
+		if iteration > 6 {
 			break
 		}
 
 		text := scanner.Text()
 		if text != want[line] {
-			t.Errorf("Line should move to the next line after 70 characters.")
+			t.Errorf("Line should move to the next line after 70 characters.\nGot\n%v\n\nWant\n%v", text, want[line])
 		}
+		line++
+	}
+}
+
+func TestPPMFileEndsInNewLine(t *testing.T) {
+	c := NewCanvas(5, 3)
+	got := c.ToPPM()
+	endsInNewline := strings.HasSuffix(got, "\n")
+
+	if !endsInNewline {
+		t.Errorf("PPM file should end in a newline character")
 	}
 }
